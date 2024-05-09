@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map Dashboard</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #map {
+            height: 80vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var cityCenter = [51.505, -0.09];
+        var map = L.map('map').setView(cityCenter, 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        var marker, circle;
+        map.on('click', function(e) {
+            updateMarkerAndCircle(e.latlng);
+        });
+        function updateMarkerAndCircle(latlng) {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            if (circle) {
+                map.removeLayer(circle);
+            }
+            marker = L.marker(latlng).addTo(map);
+            circle = L.circle(latlng, {
+                color: 'blue',
+                fillColor: 'blue',
+                fillOpacity: 0.2
+            }).addTo(map);
+            updateLocationName(latlng);
+            updateDistanceToCityCenter(latlng);
+        }
+        function updateLocationName(latlng) {
+            $.getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng, function(data) {
+                var locationName = data.display_name;
+            });
+        }
+        function updateDistanceToCityCenter(latlng) {
+            var distance = (L.latLng(latlng).distanceTo(L.latLng(cityCenter)) / 1000).toFixed(2);
+
+            var latitude = latlng.lat.toFixed(6);
+            var longitude = latlng.lng.toFixed(6);
+            window.parent.postMessage({
+                type: "coordinates-and-distance",
+                payload: {
+                    latitude: latitude,
+                    longitude: longitude,
+                    distance: distance
+                }
+            }, "*");
+        }
+    </script>
+</body>
+</html>
