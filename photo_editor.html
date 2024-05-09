@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Photo Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #editorContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #canvasContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            position: relative;
+        }
+        #canvas {
+            border: 2px solid #333;
+            border-radius: 10px;
+            max-width: 100%;
+            max-height: 80vh;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            outline: none;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #logs {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        input[type="range"] {
+            width: 80%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Photo Editor</h1>
+    <div id="editorContainer">
+        <input type="file" id="imageInput">
+        <br>
+        <button id="grayscaleButton">Grayscale</button>
+        <button id="invertButton">Invert Colors</button>
+        <button id="resetButton">Reset</button>
+    </div>
+    <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var originalImage;
+        var brightness = 0;
+        var contrast = 100;
+
+        // Function to display logs
+        function displayLog(log) {
+            var logsDiv = document.getElementById('logs');
+            var logEntry = document.createElement('div');
+            logEntry.textContent = log;
+            logsDiv.appendChild(logEntry);
+        }
+
+        // Function to load image
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var img = new Image();
+                    img.onload = function() {
+                        var maxWidth = canvasContainer.offsetWidth;
+                        var maxHeight = canvasContainer.offsetHeight;
+                        var width = img.width;
+                        var height = img.height;
+                        if (width > maxWidth || height > maxHeight) {
+                            var ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width *= ratio;
+                            height *= ratio;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Function to apply grayscale filter
+        document.getElementById('grayscaleButton').addEventListener('click', function() {
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (var i = 0; i < imageData.data.length; i += 4) {
+                var avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+                imageData.data[i] = avg;
+                imageData.data[i + 1] = avg;
+                imageData.data[i + 2] = avg;
+            }
+            ctx.putImageData(imageData, 0, 0);
+        });
+
+        // Function to apply invert colors filter
+        document.getElementById('invertButton').addEventListener('click', function() {
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (var i = 0; i < imageData.data.length; i += 4) {
+                imageData.data[i] = 255 - imageData.data[i]; // Red
+                imageData.data[i + 1] = 255 - imageData.data[i + 1]; // Green
+                imageData.data[i + 2] = 255 - imageData.data[i + 2]; // Blue
+            }
+            ctx.putImageData(imageData, 0, 0);
+        });
+
+        // Function to reset image and logs to original
+        document.getElementById('resetButton').addEventListener('click', function() {
+            if (originalImage) {
+                ctx.putImageData(originalImage, 0, 0);
+            }
+        });
+    </script>
+</body>
+</html>
